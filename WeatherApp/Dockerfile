@@ -12,16 +12,26 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["WeatherApp/WeatherApp.csproj", "WeatherApp/"]
-RUN dotnet restore "./WeatherApp/WeatherApp.csproj"
-COPY . .
+
+# Copy csproj into a WeatherApp folder in Docker image
+COPY ["WeatherApp.csproj", "WeatherApp/"]
+
+# Restore NuGet packages
+RUN dotnet restore "WeatherApp/WeatherApp.csproj"
+
+# Copy all source code into WeatherApp folder
+COPY . WeatherApp/
+
+# Set working directory to the WeatherApp folder
 WORKDIR "/src/WeatherApp"
-RUN dotnet build "./WeatherApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# Build the project
+RUN dotnet build "WeatherApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./WeatherApp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "WeatherApp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
