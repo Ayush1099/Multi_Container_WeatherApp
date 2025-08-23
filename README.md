@@ -11,6 +11,68 @@ The app is containerized with Docker and the image is hosted on **GitHub Contain
 
 ---
 
+## 📌 GET /api/weather (GetWeather) Flow
+```
+1️⃣ Client sends a GET request → /api/weather
+2️⃣ API tries to read Redis key: "weather_all"
+    - If found:
+        ✔ Deserialize JSON → Return data to client (FAST)
+    - If not found OR Redis unavailable:
+        ❌ Cache miss → Fetch from database
+
+3️⃣ Store DB result in Redis:
+    - Key: "weather_all"
+    - Value: JSON string of all weather data
+    - Expiry: 1 minute
+
+4️⃣ Return data to client
+```
+## 📌 POST /api/weather (CreateWeather) Flow
+```
+1️⃣ Client sends POST request with multiple weather records.
+
+2️⃣ Duplicate check:
+    a) Try to read Redis Set: "weather_keys" (contains only City_Date strings)
+        - If found (not empty):
+            ✔ Use it to filter out duplicates quickly.
+        - If empty:
+            🔄 Load all City_Date from DB → Add them to Redis Set.
+        - If Redis is down:
+            📥 Load all City_Date from DB into memory.
+
+3️⃣ Filter input list:
+    - Remove any records whose City_Date already exists.
+    - If no new records remain → Return "No new records to insert."
+
+4️⃣ Insert new records into DB.
+
+5️⃣ Update Redis Set ("weather_keys") with new City_Date entries (if Redis available).
+
+6️⃣ Invalidate Redis key "weather_all":
+    - Remove it so next GET request will fetch fresh data from DB.
+
+7️⃣ Return "{X} new records inserted."
+```
+## Diagram
+```
+[Client POST] → Check Redis("weather_keys")
+      | Found & has data? → Filter duplicates
+      | Empty? → Load City_Date from DB → Save to Redis Set
+      | Redis down? → Load City_Date from DB into memory
+
+Filter input → Keep only new records
+      | None left? → Return "No new records"
+      v
+Insert into DB
+      |
+Update Redis("weather_keys") with new City_Date
+      |
+Remove Redis("weather_all") → Forces refresh on next GET
+      v
+Return "{X} new records inserted"
+
+```
+
 ## 🐳 Option 1: Run with Docker Commands
 
 ### 1. Create a Docker network
