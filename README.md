@@ -1,8 +1,7 @@
-# 🌦️ WeatherApp with Redis (Docker + GHCR)
+# 🌦️ Docker + Redis Multi-Container .NET App
 
-This is a simple **ASP.NET Core Web API** application that uses **Redis** for caching.  
-The app is containerized with Docker and the image is hosted on **GitHub Container Registry (GHCR)**.
-
+## Description:
+Built a multi-container .NET application using Docker to validate a production-ready setup, with Docker images published to GitHub Container Registry (GHCR).
 ---
 
 ## 🚀 Prerequisites
