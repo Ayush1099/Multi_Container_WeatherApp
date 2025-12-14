@@ -1,6 +1,5 @@
 # 🌦️ Docker + Redis Multi-Container .NET App
 
-## Description:
 Built a multi-container .NET application using Docker to validate a production-ready setup, with Docker images published to GitHub Container Registry (GHCR).
 ---
 
